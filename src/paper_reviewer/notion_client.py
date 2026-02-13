@@ -2,8 +2,7 @@
 
 from typing import Dict, List
 
-from notion_client import Client
-from notion_client.api_endpoints import APIResponseError
+from notion_client import APIResponseError, Client
 
 from .errors import NotionAPIError
 

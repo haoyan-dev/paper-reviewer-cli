@@ -12,6 +12,7 @@ class BibTeXEntry(BaseModel):
     model_config = ConfigDict(
         str_strip_whitespace=True,
         validate_assignment=True,
+        populate_by_name=True,  # Allow both field name and alias
     )
 
     title: str = Field(..., description="Paper title")
@@ -30,11 +31,46 @@ class BibTeXEntry(BaseModel):
     @classmethod
     def parse_authors(cls, v):
         """Parse authors from string or list."""
+        if isinstance(v, list):
+            return v
         if isinstance(v, str):
-            # Split by "and" or comma
-            authors = [a.strip() for a in v.replace(" and ", ", ").split(",")]
+            v = v.strip()
+            if not v:
+                return []
+            # Split by " and " first (case-insensitive), preserving structure
+            # Handle "Doe, John and Smith, Jane" -> ["Doe, John", "Smith, Jane"]
+            # Handle "Doe, John, Smith, Jane" -> ["Doe", "John", "Smith", "Jane"]
+            parts = []
+            # Use regex-like splitting but simpler: split by " and " first
+            if " and " in v.lower():
+                # Split by " and " (case-insensitive)
+                import re
+                parts = [p.strip() for p in re.split(r'\s+and\s+', v, flags=re.IGNORECASE)]
+            else:
+                # No "and", just split by comma
+                parts = [v]
+            
+            authors = []
+            for part in parts:
+                part = part.strip()
+                if not part:
+                    continue
+                # If part contains comma and looks like "Last, First" format (has exactly one comma)
+                # and the part after comma doesn't contain more commas, keep it as one author
+                if "," in part:
+                    comma_count = part.count(",")
+                    # If multiple commas, split by comma (e.g., "Doe, John, Smith, Jane")
+                    if comma_count > 1:
+                        subparts = [p.strip() for p in part.split(",")]
+                        authors.extend([a for a in subparts if a])
+                    else:
+                        # Single comma - likely "Last, First" format, keep as is
+                        authors.append(part)
+                else:
+                    # No comma, add as single author
+                    authors.append(part)
             return [a for a in authors if a]
-        return v if isinstance(v, list) else []
+        return []
 
 
 class PaperPair(BaseModel):

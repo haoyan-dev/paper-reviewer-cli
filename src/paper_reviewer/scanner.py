@@ -38,11 +38,14 @@ def scan_directory(directory: Path) -> List[PaperPair]:
 
     paper_pairs = []
 
-    # Check if the root directory itself contains a .bib and .pdf
-    bib_file = _find_bibtex_file(directory)
-    pdf_file = find_pdf_in_directory(directory)
+    # Check if the root directory itself DIRECTLY contains a .bib and .pdf
+    # (not in subdirectories) to decide between single directory mode and recursive mode
+    bib_files_direct = list(directory.glob("*.bib")) + list(directory.glob("*.BIB")) + list(directory.glob("*.Bib"))
+    bib_files_direct = [f for f in bib_files_direct if f.is_file()]
+    pdf_files_direct = list(directory.glob("*.pdf")) + list(directory.glob("*.PDF")) + list(directory.glob("*.Pdf"))
+    pdf_files_direct = [f for f in pdf_files_direct if f.is_file()]
 
-    if bib_file and pdf_file:
+    if bib_files_direct and pdf_files_direct:
         # Single directory mode: process the root directory
         logger.info(f"Processing directory: {directory}")
         pairs = scan_single_directory(directory)
