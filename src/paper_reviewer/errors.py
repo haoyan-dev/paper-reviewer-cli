@@ -30,3 +30,9 @@ class PDFNotFoundError(PaperReviewerError):
     """Raised when PDF file cannot be found or matched."""
 
     pass
+
+
+class GeminiAPIError(PaperReviewerError):
+    """Raised when Gemini API calls fail."""
+
+    pass
