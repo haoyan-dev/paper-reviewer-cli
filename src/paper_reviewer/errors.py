@@ -36,3 +36,9 @@ class GeminiAPIError(PaperReviewerError):
     """Raised when Gemini API calls fail."""
 
     pass
+
+
+class NotionAPIError(PaperReviewerError):
+    """Raised when Notion API calls fail."""
+
+    pass
