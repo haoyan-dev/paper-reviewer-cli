@@ -19,6 +19,12 @@ class PaperReviewerError(Exception):
         else:
             super().__init__(message)
 
+    def __repr__(self) -> str:
+        """Return string representation for debugging."""
+        if self.file_path:
+            return f"{self.__class__.__name__}(message={self.message!r}, file_path={self.file_path!r})"
+        return f"{self.__class__.__name__}(message={self.message!r})"
+
 
 class BibTeXParseError(PaperReviewerError):
     """Raised when BibTeX file parsing fails."""
