@@ -21,6 +21,7 @@ from .ui import (
     display_papers_table,
     display_success,
 )
+from .zotero_parser import parse_zotero_bib_file
 
 logger = get_logger(__name__)
 
@@ -109,6 +110,7 @@ def main(directory: Optional[Union[Path, str]] = None) -> int:
 
     try:
         # Parse command-line arguments if directory not provided
+        zotero_bib_path = None
         if directory is None:
             parser = argparse.ArgumentParser(
                 description="Automatically review research papers and sync to Notion"
@@ -119,27 +121,15 @@ def main(directory: Optional[Union[Path, str]] = None) -> int:
                 default=".",
                 help="Directory to scan for papers (default: current directory)",
             )
+            parser.add_argument(
+                "--zotero-bib",
+                "-z",
+                dest="zotero_bib",
+                help="Path to Zotero-exported BibTeX file (alternative to directory scanning)",
+            )
             args = parser.parse_args()
             directory = args.directory
-
-        # Convert to Path object
-        if isinstance(directory, Path):
-            directory_path = directory.resolve()
-        else:
-            directory_path = Path(directory).resolve()
-
-        # Validate directory exists
-        if not directory_path.exists():
-            display_error(f"Directory does not exist: {directory_path}")
-            logger.error(f"Directory does not exist: {directory_path}")
-            return 1
-
-        if not directory_path.is_dir():
-            display_error(f"Path is not a directory: {directory_path}")
-            logger.error(f"Path is not a directory: {directory_path}")
-            return 1
-
-        logger.info(f"Starting paper reviewer for directory: {directory_path}")
+            zotero_bib_path = args.zotero_bib
 
         # Load configuration
         try:
@@ -150,15 +140,61 @@ def main(directory: Optional[Union[Path, str]] = None) -> int:
             logger.error(f"Configuration error: {str(e)}")
             return 1
 
-        # Scan directory for papers
-        display_info(f"Scanning directory: {directory_path}")
-        logger.info(f"Scanning directory: {directory_path}")
-        try:
-            papers = scan_directory(directory_path)
-        except Exception as e:
-            display_error(f"Failed to scan directory: {str(e)}")
-            logger.error(f"Failed to scan directory: {str(e)}", exc_info=True)
-            return 1
+        # Determine workflow: Zotero BibTeX file or directory scanning
+        if zotero_bib_path:
+            # Zotero BibTeX workflow
+            bib_path = Path(zotero_bib_path).resolve()
+            
+            # Validate BibTeX file exists
+            if not bib_path.exists():
+                display_error(f"BibTeX file does not exist: {bib_path}")
+                logger.error(f"BibTeX file does not exist: {bib_path}")
+                return 1
+
+            if not bib_path.is_file():
+                display_error(f"Path is not a file: {bib_path}")
+                logger.error(f"Path is not a file: {bib_path}")
+                return 1
+
+            logger.info(f"Starting paper reviewer for Zotero BibTeX file: {bib_path}")
+            display_info(f"Parsing Zotero BibTeX file: {bib_path}")
+            
+            try:
+                papers = parse_zotero_bib_file(bib_path)
+            except Exception as e:
+                display_error(f"Failed to parse Zotero BibTeX file: {str(e)}")
+                logger.error(f"Failed to parse Zotero BibTeX file: {str(e)}", exc_info=True)
+                return 1
+        else:
+            # Existing directory scanning workflow (unchanged)
+            # Convert to Path object
+            if isinstance(directory, Path):
+                directory_path = directory.resolve()
+            else:
+                directory_path = Path(directory).resolve()
+
+            # Validate directory exists
+            if not directory_path.exists():
+                display_error(f"Directory does not exist: {directory_path}")
+                logger.error(f"Directory does not exist: {directory_path}")
+                return 1
+
+            if not directory_path.is_dir():
+                display_error(f"Path is not a directory: {directory_path}")
+                logger.error(f"Path is not a directory: {directory_path}")
+                return 1
+
+            logger.info(f"Starting paper reviewer for directory: {directory_path}")
+
+            # Scan directory for papers
+            display_info(f"Scanning directory: {directory_path}")
+            logger.info(f"Scanning directory: {directory_path}")
+            try:
+                papers = scan_directory(directory_path)
+            except Exception as e:
+                display_error(f"Failed to scan directory: {str(e)}")
+                logger.error(f"Failed to scan directory: {str(e)}", exc_info=True)
+                return 1
 
         if not papers:
             display_info("No papers found. Exiting.")

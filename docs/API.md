@@ -278,6 +278,70 @@ if pdf_path:
     print(f"Found PDF: {pdf_path}")
 ```
 
+### Zotero BibTeX Parsing
+
+#### `paper_reviewer.zotero_parser.parse_zotero_bib_file()`
+
+Parse a Zotero-exported BibTeX file and extract PDF paths from `file` fields.
+
+```python
+def parse_zotero_bib_file(bib_path: Path) -> List[PaperPair]
+```
+
+**Parameters**:
+- `bib_path` (Path): Path to the Zotero-exported `.bib` file
+
+**Returns**:
+- `List[PaperPair]`: List of PaperPair objects, one for each BibTeX entry with a valid PDF path
+
+**Raises**:
+- `BibTeXParseError`: If the BibTeX file cannot be parsed
+- `FileNotFoundError`: If the BibTeX file does not exist
+
+**Example**:
+```python
+from pathlib import Path
+from paper_reviewer.zotero_parser import parse_zotero_bib_file
+
+# Parse Zotero BibTeX file
+paper_pairs = parse_zotero_bib_file(Path("zotero_export.bib"))
+
+# Process each paper
+for paper_pair in paper_pairs:
+    print(f"Found: {paper_pair.metadata.title}")
+    print(f"PDF: {paper_pair.pdf_path}")
+```
+
+**Notes**:
+- Entries without a `file` field are automatically skipped
+- Entries with invalid or non-existent PDF paths are skipped
+- Supports Windows paths with escaped backslashes (Zotero format: `C\:\\Users\\...`)
+- Supports Unix paths
+
+#### `paper_reviewer.zotero_parser.extract_pdf_path_from_file_field()`
+
+Extract PDF path from Zotero `file` field format.
+
+```python
+def extract_pdf_path_from_file_field(file_field: str) -> Optional[Path]
+```
+
+**Parameters**:
+- `file_field` (str): The file field value from BibTeX entry (format: `{PDF:<path>:application/pdf}`)
+
+**Returns**:
+- `Optional[Path]`: Path object if successfully extracted and file exists, `None` otherwise
+
+**Example**:
+```python
+from paper_reviewer.zotero_parser import extract_pdf_path_from_file_field
+
+file_field = "{PDF:C\\:\\Users\\paper.pdf:application/pdf}"
+pdf_path = extract_pdf_path_from_file_field(file_field)
+if pdf_path:
+    print(f"PDF path: {pdf_path}")
+```
+
 ### Gemini Integration
 
 #### `paper_reviewer.gemini_client.analyze_paper()`

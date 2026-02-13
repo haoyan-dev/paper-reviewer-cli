@@ -150,6 +150,22 @@ paper-reviewer [directory]
 
 - `directory`: Path to directory containing papers (default: current directory)
 
+### Zotero BibTeX File Mode
+
+Alternatively, you can process a Zotero-exported BibTeX file directly:
+
+```bash
+paper-reviewer --zotero-bib path/to/zotero_export.bib
+```
+
+or using the short flag:
+
+```bash
+paper-reviewer -z path/to/zotero_export.bib
+```
+
+This mode extracts PDF paths directly from the `file` field in Zotero BibTeX entries, eliminating the need to organize papers in directories. Entries without a `file` field or with invalid PDF paths are automatically skipped.
+
 ### Directory Structure
 
 The tool supports two scanning modes:
@@ -222,6 +238,14 @@ paper-reviewer /path/to/papers
 ```bash
 paper-reviewer ./papers/paper1
 ```
+
+### Process Zotero BibTeX File
+
+```bash
+paper-reviewer --zotero-bib zotero_export.bib
+```
+
+This will process all entries in the BibTeX file that have valid PDF paths in their `file` field.
 
 ## Output
 
